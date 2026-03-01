@@ -1,0 +1,148 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Font Faces ─────────────────────────────────────────────── */
+@font-face {
+  font-family: "Bricolage Grotesque";
+  src: url("/assets/fonts/BricolageGrotesque[opsz,wdth,wght].woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Sora";
+  src: url("/assets/fonts/Sora[wght].woff2") format("woff2");
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ─── Design Tokens ──────────────────────────────────────────── */
+@layer base {
+  :root {
+    --radius: 0.5rem;
+
+    /* Dark-first palette — electric lime on near-black */
+    --background: 0.11 0.005 260;
+    --foreground: 0.97 0 0;
+
+    --card: 0.14 0.007 260;
+    --card-foreground: 0.97 0 0;
+
+    --popover: 0.14 0.007 260;
+    --popover-foreground: 0.97 0 0;
+
+    /* Electric lime as primary */
+    --primary: 0.88 0.2 128;
+    --primary-foreground: 0.1 0.01 130;
+
+    --secondary: 0.18 0.01 260;
+    --secondary-foreground: 0.85 0.01 0;
+
+    --muted: 0.18 0.008 260;
+    --muted-foreground: 0.52 0.015 260;
+
+    --accent: 0.65 0.18 48;
+    --accent-foreground: 0.1 0 0;
+
+    --destructive: 0.62 0.22 22;
+    --destructive-foreground: 0.97 0 0;
+
+    --border: 0.22 0.01 260;
+    --input: 0.22 0.01 260;
+    --ring: 0.88 0.2 128;
+
+    /* Chart colors */
+    --chart-1: 0.88 0.2 128;
+    --chart-2: 0.65 0.18 48;
+    --chart-3: 0.6 0.15 200;
+    --chart-4: 0.7 0.16 300;
+    --chart-5: 0.55 0.18 22;
+
+    /* Sidebar */
+    --sidebar: 0.09 0.005 260;
+    --sidebar-foreground: 0.97 0 0;
+    --sidebar-primary: 0.88 0.2 128;
+    --sidebar-primary-foreground: 0.1 0.01 130;
+    --sidebar-accent: 0.16 0.01 260;
+    --sidebar-accent-foreground: 0.85 0.01 0;
+    --sidebar-border: 0.22 0.01 260;
+    --sidebar-ring: 0.88 0.2 128;
+
+    /* Custom tokens */
+    --lime: 0.88 0.2 128;
+    --lime-dim: 0.75 0.18 128;
+    --orange: 0.72 0.18 48;
+    --glow-lime: 0 0 20px oklch(0.88 0.2 128 / 0.4);
+    --glow-orange: 0 0 20px oklch(0.72 0.18 48 / 0.4);
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Sora", sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: "Bricolage Grotesque", sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+  }
+
+  /* ─── Scrollbar ── */
+  ::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  ::-webkit-scrollbar-track {
+    background: oklch(var(--background));
+  }
+  ::-webkit-scrollbar-thumb {
+    background: oklch(var(--border));
+    border-radius: 99px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: oklch(var(--muted-foreground));
+  }
+}
+
+/* ─── Custom Utilities ───────────────────────────────────────── */
+@layer utilities {
+  .glow-lime {
+    box-shadow: var(--glow-lime);
+  }
+  .glow-orange {
+    box-shadow: var(--glow-orange);
+  }
+  .text-lime {
+    color: oklch(var(--lime));
+  }
+  .text-orange {
+    color: oklch(var(--orange));
+  }
+  .bg-lime {
+    background-color: oklch(var(--lime));
+  }
+  .bg-lime-dim {
+    background-color: oklch(var(--lime-dim));
+  }
+  .border-lime {
+    border-color: oklch(var(--lime));
+  }
+  .border-orange {
+    border-color: oklch(var(--orange));
+  }
+  .font-display {
+    font-family: "Bricolage Grotesque", sans-serif;
+  }
+  .noise-bg {
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  }
+}
