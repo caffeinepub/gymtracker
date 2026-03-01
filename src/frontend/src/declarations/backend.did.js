@@ -72,6 +72,11 @@ export const UserProfile = IDL.Record({
   }),
   'weightKg' : IDL.Float64,
 });
+export const CustomWorkoutPlan = IDL.Record({
+  'id' : IDL.Text,
+  'days' : IDL.Vec(WorkoutDay),
+  'name' : IDL.Text,
+});
 export const ProgressPhoto = IDL.Record({
   'blob' : ExternalBlob,
   'date' : IDL.Int,
@@ -115,9 +120,11 @@ export const idlService = IDL.Service({
   'addWeightEntry' : IDL.Func([IDL.Float64], [], []),
   'askAI' : IDL.Func([IDL.Text], [AIResponse], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+  'deleteCustomPlan' : IDL.Func([IDL.Text], [], []),
   'getAllPlans' : IDL.Func([], [IDL.Vec(WorkoutPlan)], ['query']),
   'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+  'getCustomPlans' : IDL.Func([], [IDL.Vec(CustomWorkoutPlan)], ['query']),
   'getProgressPhotos' : IDL.Func([], [IDL.Vec(ProgressPhoto)], ['query']),
   'getRecommendedPlan' : IDL.Func([], [IDL.Opt(WorkoutPlan)], []),
   'getSessions' : IDL.Func([], [IDL.Vec(ExerciseSession)], ['query']),
@@ -130,6 +137,7 @@ export const idlService = IDL.Service({
   'initializeWorkoutPlans' : IDL.Func([], [], []),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
   'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+  'saveCustomPlan' : IDL.Func([CustomWorkoutPlan], [], []),
 });
 
 export const idlInitArgs = [];
@@ -199,6 +207,11 @@ export const idlFactory = ({ IDL }) => {
     }),
     'weightKg' : IDL.Float64,
   });
+  const CustomWorkoutPlan = IDL.Record({
+    'id' : IDL.Text,
+    'days' : IDL.Vec(WorkoutDay),
+    'name' : IDL.Text,
+  });
   const ProgressPhoto = IDL.Record({
     'blob' : ExternalBlob,
     'date' : IDL.Int,
@@ -242,9 +255,11 @@ export const idlFactory = ({ IDL }) => {
     'addWeightEntry' : IDL.Func([IDL.Float64], [], []),
     'askAI' : IDL.Func([IDL.Text], [AIResponse], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
+    'deleteCustomPlan' : IDL.Func([IDL.Text], [], []),
     'getAllPlans' : IDL.Func([], [IDL.Vec(WorkoutPlan)], ['query']),
     'getCallerUserProfile' : IDL.Func([], [IDL.Opt(UserProfile)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
+    'getCustomPlans' : IDL.Func([], [IDL.Vec(CustomWorkoutPlan)], ['query']),
     'getProgressPhotos' : IDL.Func([], [IDL.Vec(ProgressPhoto)], ['query']),
     'getRecommendedPlan' : IDL.Func([], [IDL.Opt(WorkoutPlan)], []),
     'getSessions' : IDL.Func([], [IDL.Vec(ExerciseSession)], ['query']),
@@ -257,6 +272,7 @@ export const idlFactory = ({ IDL }) => {
     'initializeWorkoutPlans' : IDL.Func([], [], []),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
     'saveCallerUserProfile' : IDL.Func([UserProfile], [], []),
+    'saveCustomPlan' : IDL.Func([CustomWorkoutPlan], [], []),
   });
 };
 

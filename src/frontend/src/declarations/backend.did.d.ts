@@ -14,6 +14,11 @@ export interface AIResponse {
   'recommendedPlan' : [] | [WorkoutPlan],
   'message' : string,
 }
+export interface CustomWorkoutPlan {
+  'id' : string,
+  'days' : Array<WorkoutDay>,
+  'name' : string,
+}
 export interface Exercise {
   'name' : string,
   'reps' : bigint,
@@ -89,9 +94,11 @@ export interface _SERVICE {
   'addWeightEntry' : ActorMethod<[number], undefined>,
   'askAI' : ActorMethod<[string], AIResponse>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
+  'deleteCustomPlan' : ActorMethod<[string], undefined>,
   'getAllPlans' : ActorMethod<[], Array<WorkoutPlan>>,
   'getCallerUserProfile' : ActorMethod<[], [] | [UserProfile]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
+  'getCustomPlans' : ActorMethod<[], Array<CustomWorkoutPlan>>,
   'getProgressPhotos' : ActorMethod<[], Array<ProgressPhoto>>,
   'getRecommendedPlan' : ActorMethod<[], [] | [WorkoutPlan]>,
   'getSessions' : ActorMethod<[], Array<ExerciseSession>>,
@@ -100,6 +107,7 @@ export interface _SERVICE {
   'initializeWorkoutPlans' : ActorMethod<[], undefined>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'saveCallerUserProfile' : ActorMethod<[UserProfile], undefined>,
+  'saveCustomPlan' : ActorMethod<[CustomWorkoutPlan], undefined>,
 }
 export declare const idlService: IDL.ServiceClass;
 export declare const idlInitArgs: IDL.Type[];

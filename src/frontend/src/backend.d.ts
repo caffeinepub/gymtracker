@@ -14,12 +14,24 @@ export class ExternalBlob {
     static fromBytes(blob: Uint8Array<ArrayBuffer>): ExternalBlob;
     withUploadProgress(onProgress: (percentage: number) => void): ExternalBlob;
 }
-export interface UserProfile {
-    age: bigint;
-    fitnessLevel: Variant_intermediate_beginner_advanced;
-    heightCm: number;
-    goal: Variant_get_fit_lose_weight_build_muscle;
+export interface Exercise {
+    name: string;
+    reps: bigint;
+    sets: bigint;
     weightKg: number;
+}
+export interface CustomWorkoutPlan {
+    id: string;
+    days: Array<WorkoutDay>;
+    name: string;
+}
+export interface ExerciseSession {
+    date: bigint;
+    exercises: Array<Exercise>;
+}
+export interface WorkoutDay {
+    day: string;
+    exercises: Array<Exercise>;
 }
 export interface WorkoutPlan {
     fitnessLevel: Variant_intermediate_beginner_advanced;
@@ -27,19 +39,9 @@ export interface WorkoutPlan {
     goal: Variant_get_fit_lose_weight_build_muscle;
     name: string;
 }
-export interface Exercise {
-    name: string;
-    reps: bigint;
-    sets: bigint;
-    weightKg: number;
-}
 export interface AIResponse {
     recommendedPlan?: WorkoutPlan;
     message: string;
-}
-export interface ExerciseSession {
-    date: bigint;
-    exercises: Array<Exercise>;
 }
 export interface ProgressPhoto {
     blob: ExternalBlob;
@@ -50,9 +52,12 @@ export interface WeightEntry {
     date: bigint;
     weightKg: number;
 }
-export interface WorkoutDay {
-    day: string;
-    exercises: Array<Exercise>;
+export interface UserProfile {
+    age: bigint;
+    fitnessLevel: Variant_intermediate_beginner_advanced;
+    heightCm: number;
+    goal: Variant_get_fit_lose_weight_build_muscle;
+    weightKg: number;
 }
 export enum UserRole {
     admin = "admin",
@@ -75,9 +80,11 @@ export interface backendInterface {
     addWeightEntry(weightKg: number): Promise<void>;
     askAI(message: string): Promise<AIResponse>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
+    deleteCustomPlan(id: string): Promise<void>;
     getAllPlans(): Promise<Array<WorkoutPlan>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
+    getCustomPlans(): Promise<Array<CustomWorkoutPlan>>;
     getProgressPhotos(): Promise<Array<ProgressPhoto>>;
     getRecommendedPlan(): Promise<WorkoutPlan | null>;
     getSessions(): Promise<Array<ExerciseSession>>;
@@ -86,4 +93,5 @@ export interface backendInterface {
     initializeWorkoutPlans(): Promise<void>;
     isCallerAdmin(): Promise<boolean>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
+    saveCustomPlan(plan: CustomWorkoutPlan): Promise<void>;
 }

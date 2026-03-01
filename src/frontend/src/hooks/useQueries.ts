@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ExternalBlob } from "../backend";
 import type {
   AIResponse,
+  CustomWorkoutPlan,
   ExerciseSession,
   ProgressPhoto,
   UserProfile,
@@ -198,6 +199,51 @@ export function useInitializeWorkoutPlans() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["recommendedPlan"] });
       queryClient.invalidateQueries({ queryKey: ["allPlans"] });
+    },
+  });
+}
+
+// ─── Custom Workout Plans ────────────────────────────────────────────────────
+
+export function useGetCustomPlans() {
+  const { actor, isFetching } = useActor();
+
+  return useQuery<CustomWorkoutPlan[]>({
+    queryKey: ["customPlans"],
+    queryFn: async () => {
+      if (!actor) return [];
+      return actor.getCustomPlans();
+    },
+    enabled: !!actor && !isFetching,
+  });
+}
+
+export function useSaveCustomPlan() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (plan: CustomWorkoutPlan) => {
+      if (!actor) throw new Error("Actor not available");
+      await actor.saveCustomPlan(plan);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["customPlans"] });
+    },
+  });
+}
+
+export function useDeleteCustomPlan() {
+  const { actor } = useActor();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      if (!actor) throw new Error("Actor not available");
+      await actor.deleteCustomPlan(id);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["customPlans"] });
     },
   });
 }

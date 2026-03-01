@@ -1,6 +1,7 @@
 import Map "mo:core/Map";
 import List "mo:core/List";
 import Text "mo:core/Text";
+import Float "mo:core/Float";
 import Runtime "mo:core/Runtime";
 import Iter "mo:core/Iter";
 import Time "mo:core/Time";
@@ -11,6 +12,9 @@ import MixinAuthorization "authorization/MixinAuthorization";
 import AccessControl "authorization/access-control";
 import MixinStorage "blob-storage/Mixin";
 import Storage "blob-storage/Storage";
+
+
+// Migrate state on upgrades
 
 actor {
   // Integrate Authorization (RBAC)
@@ -29,42 +33,48 @@ actor {
     goal : { #lose_weight; #build_muscle; #get_fit };
   };
 
-  type Exercise = {
+  public type Exercise = {
     name : Text;
     sets : Nat;
     reps : Nat;
     weightKg : Float;
   };
 
-  type ExerciseSession = {
+  public type ExerciseSession = {
     date : Int;
     exercises : [Exercise];
   };
 
-  type WeightEntry = {
+  public type WeightEntry = {
     date : Int;
     weightKg : Float;
   };
 
-  type ProgressPhoto = {
+  public type ProgressPhoto = {
     date : Int;
     blob : Storage.ExternalBlob;
     note : ?Text;
   };
 
-  type WorkoutDay = {
+  public type WorkoutDay = {
     day : Text;
     exercises : [Exercise];
   };
 
-  type WorkoutPlan = {
+  public type WorkoutPlan = {
     name : Text;
     fitnessLevel : { #beginner; #intermediate; #advanced };
     goal : { #lose_weight; #build_muscle; #get_fit };
     days : [WorkoutDay];
   };
 
-  type AIResponse = {
+  public type CustomWorkoutPlan = {
+    id : Text;
+    name : Text;
+    days : [WorkoutDay];
+  };
+
+  public type AIResponse = {
     message : Text;
     recommendedPlan : ?WorkoutPlan;
   };
@@ -81,6 +91,7 @@ actor {
   let weightLogs = Map.empty<Principal, List.List<WeightEntry>>();
   let photos = Map.empty<Principal, List.List<ProgressPhoto>>();
   let workoutPlans = List.empty<WorkoutPlan>();
+  let customPlans = Map.empty<Principal, List.List<CustomWorkoutPlan>>();
 
   // Profile Management - Required Interface
   public query ({ caller }) func getCallerUserProfile() : async ?UserProfile {
@@ -195,23 +206,38 @@ actor {
 
     let lowerMsg = message.toLower();
 
-    if (lowerMsg.contains(#text "beginner workout")) {
+    // Workout Plan Advice
+    if (lowerMsg.contains(#text "workout") or lowerMsg.contains(#text "plan") or lowerMsg.contains(#text "exercise") or lowerMsg.contains(#text "routine")) {
+      // Find best fit plan
+      let matchingPlan = switch (workoutPlans.values().find(func(plan) { plan.fitnessLevel == profile.fitnessLevel and plan.goal == profile.goal })) {
+        case (?plan) { ?plan };
+        case (null) {
+          findNextBestPlan(profile.fitnessLevel, profile.goal);
+        };
+      };
+
+      let personalizedMessage = personalizedWorkoutMessage(profile, matchingPlan);
       return {
-        message = "As a beginner, focus on full-body workouts with basic exercises. Aim for 3 sets of 10-12 reps.";
-        recommendedPlan = getPlan("Beginner Full Body");
+        message = personalizedMessage;
+        recommendedPlan = matchingPlan;
       };
     };
 
-    if (lowerMsg.contains(#text "nutrition")) {
+    // Nutrition Advice
+    if (lowerMsg.contains(#text "nutrition") or lowerMsg.contains(#text "protein") or lowerMsg.contains(#text "food")) {
+      let proteinIntake = profile.weightKg * 1.8;
+      let nutritionMessage = personalizedNutritionMessage(profile, proteinIntake);
       return {
-        message = "Nutrition is key to fitness. Focus on balanced meals with protein, healthy fats, and complex carbs.";
+        message = nutritionMessage;
         recommendedPlan = null;
       };
     };
 
-    if (lowerMsg.contains(#text "motivation")) {
+    // Motivation
+    if (lowerMsg.contains(#text "motivat") or lowerMsg.contains(#text "struggle") or lowerMsg.contains(#text "hard")) {
+      let motivationMessage = personalizedMotivationMessage(profile.fitnessLevel, profile.goal);
       return {
-        message = "Stay consistent, set achievable goals, and track your progress. Remember, results take time!";
+        message = motivationMessage;
         recommendedPlan = null;
       };
     };
@@ -222,8 +248,80 @@ actor {
     };
   };
 
-  func getPlan(name : Text) : ?WorkoutPlan {
-    workoutPlans.values().find(func(plan) { plan.name == name });
+  func findNextBestPlan(level : { #beginner; #intermediate; #advanced }, goal : { #lose_weight; #build_muscle; #get_fit }) : ?WorkoutPlan {
+    let allPlans = workoutPlans.toArray();
+    let sameGoalPlan = allPlans.find(func(p) { p.goal == goal });
+    switch (sameGoalPlan) {
+      case (?plan) { ?plan };
+      case (null) {
+        let sameLevelPlan = allPlans.find(func(p) { p.fitnessLevel == level });
+        switch (sameLevelPlan) {
+          case (?plan) { ?plan };
+          case (null) { if (allPlans.size() > 0) { ?allPlans[0] } else { null } };
+        };
+      };
+    };
+  };
+
+  func personalizedWorkoutMessage(profile : UserProfile, plan : ?WorkoutPlan) : Text {
+    let levelText = switch (profile.fitnessLevel) {
+      case (#beginner) { "beginner" };
+      case (#intermediate) { "intermediate" };
+      case (#advanced) { "advanced" };
+    };
+
+    let goalText = switch (profile.goal) {
+      case (#lose_weight) { "losing weight" };
+      case (#build_muscle) { "building muscle" };
+      case (#get_fit) { "getting fit" };
+    };
+
+    let baseMessage = "Based on your profile as a " # levelText # " aiming for " # goalText # ", I recommend ";
+
+    switch (plan) {
+      case (null) { baseMessage # "starting with full-body workouts 3-4 times per week, focusing on major muscle groups." };
+      case (?p) { baseMessage # "the " # p.name # " plan, which is tailored to your fitness level and goal." };
+    };
+  };
+
+  func personalizedNutritionMessage(profile : UserProfile, proteinIntake : Float) : Text {
+    let goalMessage = switch (profile.goal) {
+      case (#lose_weight) {
+        "focus on higher protein intake, maintaining a calorie deficit, and including both cardio and strength training in your routine.";
+      };
+      case (#build_muscle) {
+        "aim for a slight calorie surplus, prioritize progressive overload in your workouts, and ensure adequate protein intake.";
+      };
+      case (#get_fit) {
+        "maintain a balanced diet, include diverse exercises, and focus on consistency for long-term results.";
+      };
+    };
+
+    "Nutrition is crucial for your fitness journey. As a " # fitnessLevelToText(profile.fitnessLevel) # ", you should " # goalMessage # " Aim for around " # proteinIntake.toText() # " grams of protein per day based on your weight. Stay hydrated, get enough sleep, and remember that consistency is key.";
+  };
+
+  func personalizedMotivationMessage(level : { #beginner; #intermediate; #advanced }, goal : { #lose_weight; #build_muscle; #get_fit }) : Text {
+    let levelMessage = switch (level) {
+      case (#beginner) { "start slow, stay consistent, and focus on building healthy habits." };
+      case (#intermediate) { "keep pushing your limits, vary your routines, and set specific goals to stay motivated." };
+      case (#advanced) { "challenge yourself, track progress, and remember that ongoing effort leads to sustained results." };
+    };
+
+    let goalMessage = switch (goal) {
+      case (#lose_weight) { "combine calorie deficit in your diet with regular exercise. Progress may be slow, but every small step counts." };
+      case (#build_muscle) { "focus on progressive overload in workouts and get adequate protein. Muscle growth takes 4-8 weeks to become noticeable." };
+      case (#get_fit) { "diversify workouts, maintain consistency, and celebrate small milestones. Fitness is a lifestyle, not a sprint." };
+    };
+
+    "Staying motivated can be tough, but reminding yourself of your reasons helps during hard times. " # levelMessage # " Remember, " # goalMessage # " Tracking your progress and celebrating victories keeps you engaged.";
+  };
+
+  func fitnessLevelToText(level : { #beginner; #intermediate; #advanced }) : Text {
+    switch (level) {
+      case (#beginner) { "beginner" };
+      case (#intermediate) { "intermediate" };
+      case (#advanced) { "advanced" };
+    };
   };
 
   // Workout Plans
@@ -320,5 +418,47 @@ actor {
 
     workoutPlans.add(beginnerPlan);
     workoutPlans.add(advancePlan);
+  };
+
+  // Custom User Plans
+  public shared ({ caller }) func saveCustomPlan(plan : CustomWorkoutPlan) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can save custom plans");
+    };
+    let userPlans = switch (customPlans.get(caller)) {
+      case (null) { List.empty<CustomWorkoutPlan>() };
+      case (?p) { p };
+    };
+    let plansArray = userPlans.toArray();
+    let filteredPlans = plansArray.filter(func(p) { p.id != plan.id });
+    let filteredList = List.fromArray<CustomWorkoutPlan>(filteredPlans);
+    userPlans.clear();
+    userPlans.addAll(filteredList.values());
+    userPlans.add(plan);
+    customPlans.add(caller, userPlans);
+  };
+
+  public shared ({ caller }) func deleteCustomPlan(id : Text) : async () {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can delete custom plans");
+    };
+    switch (customPlans.get(caller)) {
+      case (null) { Runtime.trap("Custom plans not found") };
+      case (?userPlans) {
+        let filteredPlans = userPlans.toArray().filter(func(p) { p.id != id });
+        let filteredList = List.fromArray<CustomWorkoutPlan>(filteredPlans);
+        customPlans.add(caller, filteredList);
+      };
+    };
+  };
+
+  public query ({ caller }) func getCustomPlans() : async [CustomWorkoutPlan] {
+    if (not (AccessControl.hasPermission(accessControlState, caller, #user))) {
+      Runtime.trap("Unauthorized: Only users can get custom plans");
+    };
+    switch (customPlans.get(caller)) {
+      case (null) { [] };
+      case (?userPlans) { userPlans.toArray() };
+    };
   };
 };

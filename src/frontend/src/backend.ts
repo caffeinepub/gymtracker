@@ -89,28 +89,16 @@ export class ExternalBlob {
         return this;
     }
 }
-export interface UserProfile {
-    age: bigint;
-    fitnessLevel: Variant_intermediate_beginner_advanced;
-    heightCm: number;
-    goal: Variant_get_fit_lose_weight_build_muscle;
-    weightKg: number;
-}
-export interface WorkoutPlan {
-    fitnessLevel: Variant_intermediate_beginner_advanced;
-    days: Array<WorkoutDay>;
-    goal: Variant_get_fit_lose_weight_build_muscle;
-    name: string;
-}
 export interface Exercise {
     name: string;
     reps: bigint;
     sets: bigint;
     weightKg: number;
 }
-export interface AIResponse {
-    recommendedPlan?: WorkoutPlan;
-    message: string;
+export interface CustomWorkoutPlan {
+    id: string;
+    days: Array<WorkoutDay>;
+    name: string;
 }
 export interface _CaffeineStorageRefillInformation {
     proposed_top_up_amount?: bigint;
@@ -123,6 +111,20 @@ export interface _CaffeineStorageCreateCertificateResult {
     method: string;
     blob_hash: string;
 }
+export interface WorkoutDay {
+    day: string;
+    exercises: Array<Exercise>;
+}
+export interface WorkoutPlan {
+    fitnessLevel: Variant_intermediate_beginner_advanced;
+    days: Array<WorkoutDay>;
+    goal: Variant_get_fit_lose_weight_build_muscle;
+    name: string;
+}
+export interface AIResponse {
+    recommendedPlan?: WorkoutPlan;
+    message: string;
+}
 export interface ProgressPhoto {
     blob: ExternalBlob;
     date: bigint;
@@ -132,9 +134,12 @@ export interface WeightEntry {
     date: bigint;
     weightKg: number;
 }
-export interface WorkoutDay {
-    day: string;
-    exercises: Array<Exercise>;
+export interface UserProfile {
+    age: bigint;
+    fitnessLevel: Variant_intermediate_beginner_advanced;
+    heightCm: number;
+    goal: Variant_get_fit_lose_weight_build_muscle;
+    weightKg: number;
 }
 export interface _CaffeineStorageRefillResult {
     success?: boolean;
@@ -168,9 +173,11 @@ export interface backendInterface {
     addWeightEntry(weightKg: number): Promise<void>;
     askAI(message: string): Promise<AIResponse>;
     assignCallerUserRole(user: Principal, role: UserRole): Promise<void>;
+    deleteCustomPlan(id: string): Promise<void>;
     getAllPlans(): Promise<Array<WorkoutPlan>>;
     getCallerUserProfile(): Promise<UserProfile | null>;
     getCallerUserRole(): Promise<UserRole>;
+    getCustomPlans(): Promise<Array<CustomWorkoutPlan>>;
     getProgressPhotos(): Promise<Array<ProgressPhoto>>;
     getRecommendedPlan(): Promise<WorkoutPlan | null>;
     getSessions(): Promise<Array<ExerciseSession>>;
@@ -179,6 +186,7 @@ export interface backendInterface {
     initializeWorkoutPlans(): Promise<void>;
     isCallerAdmin(): Promise<boolean>;
     saveCallerUserProfile(profile: UserProfile): Promise<void>;
+    saveCustomPlan(plan: CustomWorkoutPlan): Promise<void>;
 }
 import type { AIResponse as _AIResponse, ExternalBlob as _ExternalBlob, ProgressPhoto as _ProgressPhoto, UserProfile as _UserProfile, UserRole as _UserRole, WorkoutDay as _WorkoutDay, WorkoutPlan as _WorkoutPlan, _CaffeineStorageRefillInformation as __CaffeineStorageRefillInformation, _CaffeineStorageRefillResult as __CaffeineStorageRefillResult } from "./declarations/backend.did.d.ts";
 export class Backend implements backendInterface {
@@ -351,6 +359,20 @@ export class Backend implements backendInterface {
             return result;
         }
     }
+    async deleteCustomPlan(arg0: string): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.deleteCustomPlan(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.deleteCustomPlan(arg0);
+            return result;
+        }
+    }
     async getAllPlans(): Promise<Array<WorkoutPlan>> {
         if (this.processError) {
             try {
@@ -391,6 +413,20 @@ export class Backend implements backendInterface {
         } else {
             const result = await this.actor.getCallerUserRole();
             return from_candid_UserRole_n23(this._uploadFile, this._downloadFile, result);
+        }
+    }
+    async getCustomPlans(): Promise<Array<CustomWorkoutPlan>> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.getCustomPlans();
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.getCustomPlans();
+            return result;
         }
     }
     async getProgressPhotos(): Promise<Array<ProgressPhoto>> {
@@ -502,6 +538,20 @@ export class Backend implements backendInterface {
             }
         } else {
             const result = await this.actor.saveCallerUserProfile(to_candid_UserProfile_n30(this._uploadFile, this._downloadFile, arg0));
+            return result;
+        }
+    }
+    async saveCustomPlan(arg0: CustomWorkoutPlan): Promise<void> {
+        if (this.processError) {
+            try {
+                const result = await this.actor.saveCustomPlan(arg0);
+                return result;
+            } catch (e) {
+                this.processError(e);
+                throw new Error("unreachable");
+            }
+        } else {
+            const result = await this.actor.saveCustomPlan(arg0);
             return result;
         }
     }
